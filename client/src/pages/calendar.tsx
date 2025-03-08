@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { PeriodEntry } from "@shared/schema";
 import { format } from "date-fns";
+import { checkAndTriggerNotification } from "@/lib/notifications";
 
 const flowOptions = [
   { value: "spotting", label: "Spotting" },
@@ -119,6 +120,12 @@ export default function Calendar() {
   const selectedDateEntry = selectedDate && entries?.find(
     entry => new Date(entry.date).toDateString() === selectedDate.toDateString()
   );
+
+  useEffect(() => {
+    if (entries) {
+      checkAndTriggerNotification(entries);
+    }
+  }, [entries]);
 
   return (
     <div className="space-y-6">
