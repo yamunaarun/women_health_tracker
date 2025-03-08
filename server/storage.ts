@@ -5,7 +5,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User>;
-  
+
   getPeriodEntries(userId: number): Promise<PeriodEntry[]>;
   createPeriodEntry(entry: InsertPeriodEntry): Promise<PeriodEntry>;
   getPeriodEntry(id: number): Promise<PeriodEntry | undefined>;
@@ -37,7 +37,14 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userId++;
-    const user = { ...insertUser, id };
+    const user: User = {
+      id,
+      username: insertUser.username,
+      password: insertUser.password,
+      cycleLength: insertUser.cycleLength ?? 28,
+      periodLength: insertUser.periodLength ?? 5,
+      lastPeriod: insertUser.lastPeriod ?? null
+    };
     this.users.set(id, user);
     return user;
   }
@@ -45,7 +52,7 @@ export class MemStorage implements IStorage {
   async updateUser(id: number, data: Partial<User>): Promise<User> {
     const user = await this.getUser(id);
     if (!user) throw new Error("User not found");
-    
+
     const updated = { ...user, ...data };
     this.users.set(id, updated);
     return updated;
@@ -59,7 +66,14 @@ export class MemStorage implements IStorage {
 
   async createPeriodEntry(entry: InsertPeriodEntry): Promise<PeriodEntry> {
     const id = this.entryId++;
-    const newEntry = { ...entry, id };
+    const newEntry: PeriodEntry = {
+      id,
+      userId: entry.userId,
+      date: entry.date,
+      flow: entry.flow,
+      symptoms: entry.symptoms ?? [],
+      notes: entry.notes ?? null
+    };
     this.periodEntries.set(id, newEntry);
     return newEntry;
   }
