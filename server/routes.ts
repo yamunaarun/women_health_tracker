@@ -21,6 +21,11 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  app.get("/api/auth/check", async (req, res) => {
+    // Simple auth check endpoint
+    res.json({ authenticated: true });
+  });
+
   // User routes
   app.post("/api/users", async (req, res) => {
     try {
