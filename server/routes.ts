@@ -4,12 +4,36 @@ import { storage } from "./storage";
 import { insertUserSchema, insertPeriodEntrySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express) {
+  // Auth routes
+  app.post("/api/auth/login", async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+      const user = await storage.getUserByUsername(username);
+      if (!user || user.password !== password) {
+        res.status(401).json({ error: "Invalid credentials" });
+        return;
+      }
+
+      res.json({ id: user.id, username: user.username });
+    } catch (error) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
   // User routes
   app.post("/api/users", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
+      const existingUser = await storage.getUserByUsername(userData.username);
+
+      if (existingUser) {
+        res.status(400).json({ error: "Username already taken" });
+        return;
+      }
+
       const user = await storage.createUser(userData);
-      res.json(user);
+      res.json({ id: user.id, username: user.username });
     } catch (error) {
       res.status(400).json({ error: "Invalid user data" });
     }
@@ -21,13 +45,15 @@ export async function registerRoutes(app: Express) {
       res.status(404).json({ error: "User not found" });
       return;
     }
-    res.json(user);
+    const { password, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
   });
 
   app.patch("/api/users/:id", async (req, res) => {
     try {
       const user = await storage.updateUser(Number(req.params.id), req.body);
-      res.json(user);
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
     } catch (error) {
       res.status(404).json({ error: "User not found" });
     }
